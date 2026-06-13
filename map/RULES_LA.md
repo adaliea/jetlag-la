@@ -12,7 +12,7 @@ and rules. If this document does not address a situation, use the
 | --- | --- |
 | Game size | **Small**; use all small-game card values and questions |
 | Team format | Each round, **two players hide together as a pair**; every other player forms **one seeker team** and seeks together |
-| Expected duration | 2-5 hours for one round per player |
+| Expected duration | 3-5 hours for one round per player |
 | First-round starting point | **Union Station**, in the main concourse |
 | Later-round starting point | The previous hiding pair's hiding spot |
 | Hiding period | **40 minutes** |
