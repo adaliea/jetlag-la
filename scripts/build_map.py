@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import csv
+import html
 import json
 import math
 import re
+import shutil
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from pathlib import Path
@@ -113,6 +115,119 @@ def geometry_contains(point, geometry):
     return False
 
 
+def render_inline_markdown(text):
+    text = html.escape(text)
+    text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', text)
+    text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
+    text = re.sub(r"`([^`]+)`", r"<code>\1</code>", text)
+    return text
+
+
+def render_markdown(markdown):
+    lines = []
+    for line in markdown.splitlines():
+        if line.startswith("  ") and lines and lines[-1].lstrip().startswith("- "):
+            lines[-1] += " " + line.strip()
+        else:
+            lines.append(line)
+    output = []
+    paragraph = []
+    list_open = False
+    table_rows = []
+
+    def flush_paragraph():
+        if paragraph:
+            output.append(f"<p>{render_inline_markdown(' '.join(paragraph))}</p>")
+            paragraph.clear()
+
+    def close_list():
+        nonlocal list_open
+        if list_open:
+            output.append("</ul>")
+            list_open = False
+
+    def flush_table():
+        if not table_rows:
+            return
+        header, *rows = table_rows
+        output.append("<div class=\"table-wrap\"><table><thead><tr>")
+        output.extend(f"<th>{render_inline_markdown(cell)}</th>" for cell in header)
+        output.append("</tr></thead><tbody>")
+        for row in rows:
+            output.append("<tr>")
+            output.extend(f"<td>{render_inline_markdown(cell)}</td>" for cell in row)
+            output.append("</tr>")
+        output.append("</tbody></table></div>")
+        table_rows.clear()
+
+    for line in lines + [""]:
+        stripped = line.strip()
+        if stripped.startswith("|") and stripped.endswith("|"):
+            flush_paragraph()
+            close_list()
+            cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+            if all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells):
+                continue
+            table_rows.append(cells)
+            continue
+        flush_table()
+        if stripped.startswith("#"):
+            flush_paragraph()
+            close_list()
+            level = min(len(stripped) - len(stripped.lstrip("#")), 3)
+            title = stripped[level:].strip()
+            slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+            output.append(
+                f'<h{level} id="{slug}">{render_inline_markdown(title)}</h{level}>'
+            )
+        elif stripped.startswith("- "):
+            flush_paragraph()
+            if not list_open:
+                output.append("<ul>")
+                list_open = True
+            output.append(f"<li>{render_inline_markdown(stripped[2:])}</li>")
+        elif not stripped:
+            flush_paragraph()
+            close_list()
+        else:
+            paragraph.append(stripped)
+
+    return "\n".join(output)
+
+
+def render_rules_page(markdown):
+    body = render_markdown(markdown)
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LA Special Rules | Jet Lag: Hide + Seek</title>
+  <style>
+    * {{ box-sizing: border-box; }}
+    body {{ margin: 0; background: #f4efe5; color: #1e2630; font-family: Inter, system-ui, sans-serif; line-height: 1.55; }}
+    header {{ position: sticky; top: 0; padding: 14px 20px; background: #172331; color: white; box-shadow: 0 2px 12px #0003; }}
+    header a {{ color: #ffd27a; margin-right: 18px; }}
+    main {{ max-width: 820px; margin: 0 auto; padding: 24px 20px 60px; }}
+    h1 {{ line-height: 1.1; }}
+    h2 {{ margin-top: 36px; padding-top: 10px; border-top: 2px solid #d8cdbb; }}
+    h3 {{ margin-top: 28px; }}
+    a {{ color: #1261a0; }}
+    li {{ margin: 7px 0; }}
+    code {{ padding: 2px 4px; border-radius: 3px; background: #e8dfd1; }}
+    .table-wrap {{ overflow-x: auto; }}
+    table {{ width: 100%; border-collapse: collapse; background: white; }}
+    th, td {{ padding: 9px 10px; border: 1px solid #d8cdbb; text-align: left; vertical-align: top; }}
+    th {{ background: #e9dfcf; }}
+  </style>
+</head>
+<body>
+  <header><a href="./index.html">Back to map</a><a href="https://jetlag.denull.ru/en/rules/">Official rules</a></header>
+  <main>{body}</main>
+</body>
+</html>"""
+
+
 def build_data():
     boundary = load_boundary()
     divisions = json.loads(
@@ -213,12 +328,17 @@ def build_data():
 
 def main():
     data = build_data()
+    rules_markdown = (ROOT / "RULES_LA.md").read_text(encoding="utf-8")
     template = (ROOT / "scripts" / "map-template.html").read_text(encoding="utf-8")
     rendered = template.replace("__MAP_DATA__", json.dumps(data, separators=(",", ":")))
     OUTPUT.mkdir(exist_ok=True)
     (OUTPUT / "index.html").write_text(rendered, encoding="utf-8")
     (OUTPUT / "map-data.geojson.json").write_text(
         json.dumps(data, indent=2), encoding="utf-8"
+    )
+    shutil.copyfile(ROOT / "RULES_LA.md", OUTPUT / "RULES_LA.md")
+    (OUTPUT / "rules.html").write_text(
+        render_rules_page(rules_markdown), encoding="utf-8"
     )
     with (OUTPUT / "station-reference.csv").open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["station", "lines", "division", "stop_id"])

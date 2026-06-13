@@ -7,13 +7,15 @@ home game.
 
 1. Read [RULES_LA.md](RULES_LA.md).
 2. Open [map/index.html](map/index.html) in a browser.
-3. At Union Station, randomly choose the first hider and begin a 30-minute
+3. At Union Station, randomly choose the first hiding pair and begin a 40-minute
    hiding period.
 
 The standard game uses Metro Rail stations inside the map as eligible hiding
 zone centers. The interactive map shows the agreed game border, current rail
 lines, neighborhood divisions, and a 400 m hiding-zone preview for every
-eligible station.
+eligible station. It also includes opt-in device location, an official-rules
+link, an in-map LA special-rules panel, and a rendered full-rules page with
+the safety exclusion list.
 
 For an offline lookup table, use
 [map/station-reference.csv](map/station-reference.csv).
