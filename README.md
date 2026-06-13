@@ -58,9 +58,11 @@ npm run dev
 npm run deploy
 ```
 
-`npm run deploy` rebuilds the map before publishing it. Wrangler will prompt
-for Cloudflare authentication if needed. To change the Workers project name,
-edit `name` in `wrangler.toml`.
+`npm run deploy` publishes the committed files in `map/`. Use
+`npm run deploy:refresh` locally to rebuild the map from downloaded Metro and
+reference data before publishing it. Wrangler will prompt for Cloudflare
+authentication if needed. To change the Workers project name, edit `name` in
+`wrangler.toml`.
 
 ## Sources
 
