@@ -9,6 +9,7 @@ const APP_SHELL = [
   "./map-data.geojson.json",
   "./station-reference.csv",
   "./manifest.webmanifest",
+  "./favicon.svg",
   "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
   "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
 ];

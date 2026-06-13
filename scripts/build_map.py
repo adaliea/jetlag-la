@@ -204,6 +204,7 @@ def render_rules_page(markdown):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>LA Special Rules | Jet Lag: Hide + Seek</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <style>
     * {{ box-sizing: border-box; }}
     body {{ margin: 0; background: #f4efe5; color: #1e2630; font-family: Inter, system-ui, sans-serif; line-height: 1.55; }}
@@ -348,6 +349,7 @@ def main():
     shutil.copyfile(
         ROOT / "scripts" / "manifest.webmanifest", OUTPUT / "manifest.webmanifest"
     )
+    shutil.copyfile(ROOT / "scripts" / "favicon.svg", OUTPUT / "favicon.svg")
     (OUTPUT / "sw.js").write_text(service_worker, encoding="utf-8")
     with (OUTPUT / "station-reference.csv").open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["station", "lines", "division", "stop_id"])

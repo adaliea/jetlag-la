@@ -1,4 +1,4 @@
-const CACHE_NAME = "jetlag-la-b0f17975a181";
+const CACHE_NAME = "jetlag-la-800ce069ca62";
 const TILE_CACHE = "jetlag-la-tiles-v1";
 const MAX_TILE_ENTRIES = 500;
 const APP_SHELL = [
@@ -9,6 +9,7 @@ const APP_SHELL = [
   "./map-data.geojson.json",
   "./station-reference.csv",
   "./manifest.webmanifest",
+  "./favicon.svg",
   "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
   "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
 ];
