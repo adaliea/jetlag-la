@@ -1,0 +1,52 @@
+station,lines,division,stop_id
+7th Street / Metro Center,"A Line, B Line, D Line, E Line",Downtown,80122S
+Chinatown,A Line,Chinatown,80410S
+Civic Center / Grand Park,"B Line, D Line",Downtown,80213S
+Culver City,E Line,Culver City,80132S
+Del Mar,A Line,Pasadena,80417S
+Expo / Crenshaw E-Line,E Line,Leimert Park,80128S
+Expo / Crenshaw K-Line,K Line,Leimert Park,80709S
+Expo / La Brea / Ethel Bradley,E Line,West Adams,80130S
+Expo / Vermont,E Line,Exposition Park,80126S
+Expo / Western,E Line,Exposition Park,80127S
+Expo Park / USC,E Line,Exposition Park,80125S
+Farmdale,E Line,Baldwin Hills/Crenshaw,80129S
+Fillmore,A Line,Pasadena,80416S
+Grand / LATTC,A Line,Historic South-Central,80120S
+Grand Ave Arts / Bunker Hill,"A Line, E Line",Downtown,81401S
+Heritage Square / Arroyo,A Line,Cypress Park,80412S
+Highland Park,A Line,Highland Park,80414S
+Historic Broadway,"A Line, E Line",Downtown,81402S
+Hollywood / Highland,B Line,Hollywood,80203S
+Hollywood / Vine,B Line,Hollywood,80204S
+Hollywood / Western,B Line,East Hollywood,80205S
+Jefferson / USC,E Line,University Park,80124S
+LATTC / Ortho Institute,E Line,Historic South-Central,80123S
+La Cienega / Jefferson,E Line,West Adams,80131S
+Leimert Park,K Line,Leimert Park,80707S
+Lincoln Heights / Cypress Park,A Line,Lincoln Heights,80411S
+Little Tokyo / Arts District,"A Line, E Line",Downtown,81403S
+Mariachi Plaza / Boyle Heights,E Line,Boyle Heights,80406S
+Martin Luther King Jr,K Line,Baldwin Hills/Crenshaw,80708S
+North Hollywood,B Line,North Hollywood,80201S
+Palms,E Line,Palms,80133S
+Pershing Square,"B Line, D Line",Downtown,80212S
+Pico,"A Line, E Line",Downtown,80121S
+Pico / Aliso,E Line,Boyle Heights,80407S
+San Pedro Street,A Line,Historic South-Central,80119S
+Soto,E Line,Boyle Heights,80405S
+South Pasadena,A Line,South Pasadena,80415S
+Southwest Museum,A Line,Highland Park,80413S
+Union Station,"A Line, B Line, D Line",Downtown,80214S
+Universal / Studio City,B Line,Studio City,80202S
+Vermont / Beverly,B Line,East Hollywood,80208S
+Vermont / Santa Monica,B Line,East Hollywood,80207S
+Vermont / Sunset,B Line,East Hollywood,80206S
+Westlake / MacArthur Park,"B Line, D Line",Westlake,80210S
+Westwood / Rancho Park,E Line,Rancho Park,80134S
+Wilshire / Fairfax,D Line,Mid-Wilshire,80230S
+Wilshire / La Brea,D Line,Hancock Park,80229S
+Wilshire / La Cienega,D Line,Beverly Hills,80231S
+Wilshire / Normandie,D Line,Koreatown,80215S
+Wilshire / Vermont,"B Line, D Line",Koreatown,80209S
+Wilshire / Western,D Line,Koreatown,80216S

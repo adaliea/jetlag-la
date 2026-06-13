@@ -1,0 +1,7 @@
+name = "jetlag-los-angeles"
+compatibility_date = "2026-06-13"
+
+[assets]
+directory = "./map"
+not_found_handling = "single-page-application"
+

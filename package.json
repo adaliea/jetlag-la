@@ -1,0 +1,13 @@
+{
+  "name": "jetlag-los-angeles",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "python scripts/build_map.py",
+    "dev": "wrangler dev",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

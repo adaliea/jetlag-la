@@ -1,0 +1,242 @@
+"""Build the self-contained interactive LA Hide + Seek map."""
+
+from __future__ import annotations
+
+import csv
+import json
+import math
+import re
+import xml.etree.ElementTree as ET
+from collections import defaultdict
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+GTFS = ROOT / "current-gtfs-rail"
+REFERENCE = ROOT / "reference-old-la-map"
+OUTPUT = ROOT / "map"
+ZONE_KM = 0.4
+
+
+def read_csv(name):
+    with (GTFS / name).open(encoding="utf-8-sig", newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def point_in_polygon(point, polygon):
+    x, y = point
+    inside = False
+    j = len(polygon) - 1
+    for i, coordinate in enumerate(polygon):
+        xi, yi = coordinate[:2]
+        xj, yj = polygon[j][:2]
+        crosses = (yi > y) != (yj > y)
+        if crosses and x < (xj - xi) * (y - yi) / (yj - yi) + xi:
+            inside = not inside
+        j = i
+    return inside
+
+
+def local_xy(point, latitude):
+    lon, lat = point
+    return lon * 111.32 * math.cos(math.radians(latitude)), lat * 110.574
+
+
+def distance_to_segment_km(point, a, b):
+    latitude = point[1]
+    px, py = local_xy(point, latitude)
+    ax, ay = local_xy(a, latitude)
+    bx, by = local_xy(b, latitude)
+    dx, dy = bx - ax, by - ay
+    if dx == 0 and dy == 0:
+        return math.hypot(px - ax, py - ay)
+    t = max(0, min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+
+
+def distance_to_boundary_km(point, polygon):
+    return min(
+        distance_to_segment_km(point, polygon[i - 1], polygon[i])
+        for i in range(len(polygon))
+    )
+
+
+def perpendicular_distance(point, start, end):
+    x, y = point
+    x1, y1 = start
+    x2, y2 = end
+    if start == end:
+        return math.hypot(x - x1, y - y1)
+    return abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) / math.hypot(
+        y2 - y1, x2 - x1
+    )
+
+
+def simplify(points, tolerance=0.00018):
+    if len(points) < 3:
+        return points
+    max_distance = 0
+    index = 0
+    for i in range(1, len(points) - 1):
+        distance = perpendicular_distance(points[i], points[0], points[-1])
+        if distance > max_distance:
+            index, max_distance = i, distance
+    if max_distance <= tolerance:
+        return [points[0], points[-1]]
+    left = simplify(points[: index + 1], tolerance)
+    right = simplify(points[index:], tolerance)
+    return left[:-1] + right
+
+
+def load_boundary():
+    tree = ET.parse(REFERENCE / "processed" / "game_region.kml")
+    ns = {"k": "http://www.opengis.net/kml/2.2"}
+    text = tree.find(".//k:coordinates", ns).text
+    points = [tuple(map(float, pair.split(",")[:2])) for pair in text.split()]
+    return simplify(points)
+
+
+def geojson_feature(geometry_type, coordinates, properties):
+    return {
+        "type": "Feature",
+        "properties": properties,
+        "geometry": {"type": geometry_type, "coordinates": coordinates},
+    }
+
+
+def geometry_contains(point, geometry):
+    coordinates = geometry["coordinates"]
+    if geometry["type"] == "Polygon":
+        return point_in_polygon(point, coordinates[0])
+    if geometry["type"] == "MultiPolygon":
+        return any(point_in_polygon(point, polygon[0]) for polygon in coordinates)
+    return False
+
+
+def build_data():
+    boundary = load_boundary()
+    divisions = json.loads(
+        (REFERENCE / "processed" / "divisions.geojson").read_text(encoding="utf-8")
+    )
+    routes = {row["route_id"]: row for row in read_csv("routes.txt")}
+    stops = read_csv("stops.txt")
+    stop_to_station = {
+        row["stop_id"]: row["parent_station"] or row["stop_id"] for row in stops
+    }
+    trip_to_route = {}
+    shape_to_route = {}
+    for row in read_csv("trips.txt"):
+        trip_to_route[row["trip_id"]] = row["route_id"]
+        shape_to_route[row["shape_id"]] = row["route_id"]
+
+    stop_routes = defaultdict(set)
+    with (GTFS / "stop_times.txt").open(encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            station_id = stop_to_station.get(row["stop_id"], row["stop_id"])
+            stop_routes[station_id].add(trip_to_route[row["trip_id"]])
+
+    stations = []
+    for row in stops:
+        if row["location_type"] != "1":
+            continue
+        point = (float(row["stop_lon"]), float(row["stop_lat"]))
+        if not point_in_polygon(point, boundary):
+            continue
+        if distance_to_boundary_km(point, boundary) < ZONE_KM:
+            continue
+        served = sorted(
+            {
+                routes[route_id]["route_long_name"].replace("Metro ", "")
+                for route_id in stop_routes[row["stop_id"]]
+            }
+        )
+        name = re.sub(r" Station$", "", row["stop_name"])
+        if name == "Union":
+            name = "Union Station"
+        division = next(
+            (
+                feature["properties"]["name"]
+                for feature in divisions["features"]
+                if geometry_contains(point, feature["geometry"])
+            ),
+            "Boundary area",
+        )
+        stations.append(
+            geojson_feature(
+                "Point",
+                list(point),
+                {
+                    "name": name,
+                    "lines": served,
+                    "division": division,
+                    "stop_id": row["stop_id"],
+                    "zone_m": int(ZONE_KM * 1000),
+                },
+            )
+        )
+
+    shapes = defaultdict(list)
+    with (GTFS / "shapes.txt").open(encoding="utf-8-sig", newline="") as f:
+        for row in csv.DictReader(f):
+            shapes[row["shape_id"]].append(
+                (int(row["shape_pt_sequence"]), [float(row["shape_pt_lon"]), float(row["shape_pt_lat"])])
+            )
+
+    lines = []
+    for shape_id, points in shapes.items():
+        if shape_id not in shape_to_route:
+            continue
+        points = [point for _, point in sorted(points)]
+        if not any(point_in_polygon(point, boundary) for point in points):
+            continue
+        route = routes[shape_to_route[shape_id]]
+        lines.append(
+            geojson_feature(
+                "LineString",
+                simplify(points, 0.00012),
+                {
+                    "line": route["route_long_name"].replace("Metro ", ""),
+                    "color": "#" + route["route_color"],
+                },
+            )
+        )
+
+    return {
+        "updated": "2026-06-13",
+        "station_count": len(stations),
+        "boundary": geojson_feature("Polygon", [[list(p) for p in boundary]], {}),
+        "stations": {"type": "FeatureCollection", "features": stations},
+        "lines": {"type": "FeatureCollection", "features": lines},
+        "divisions": divisions,
+    }
+
+
+def main():
+    data = build_data()
+    template = (ROOT / "scripts" / "map-template.html").read_text(encoding="utf-8")
+    rendered = template.replace("__MAP_DATA__", json.dumps(data, separators=(",", ":")))
+    OUTPUT.mkdir(exist_ok=True)
+    (OUTPUT / "index.html").write_text(rendered, encoding="utf-8")
+    (OUTPUT / "map-data.geojson.json").write_text(
+        json.dumps(data, indent=2), encoding="utf-8"
+    )
+    with (OUTPUT / "station-reference.csv").open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["station", "lines", "division", "stop_id"])
+        writer.writeheader()
+        for feature in sorted(
+            data["stations"]["features"], key=lambda x: x["properties"]["name"]
+        ):
+            properties = feature["properties"]
+            writer.writerow(
+                {
+                    "station": properties["name"],
+                    "lines": ", ".join(properties["lines"]),
+                    "division": properties["division"],
+                    "stop_id": properties["stop_id"],
+                }
+            )
+    print(f"Built map with {data['station_count']} eligible stations.")
+
+
+if __name__ == "__main__":
+    main()
