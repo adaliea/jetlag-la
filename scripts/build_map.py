@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import html
 import json
 import math
@@ -331,15 +332,23 @@ def main():
     rules_markdown = (ROOT / "RULES_LA.md").read_text(encoding="utf-8")
     template = (ROOT / "scripts" / "map-template.html").read_text(encoding="utf-8")
     rendered = template.replace("__MAP_DATA__", json.dumps(data, separators=(",", ":")))
+    rules_page = render_rules_page(rules_markdown)
+    cache_version = hashlib.sha256(
+        (rendered + rules_page).encode("utf-8")
+    ).hexdigest()[:12]
+    service_worker = (ROOT / "scripts" / "sw-template.js").read_text(encoding="utf-8")
+    service_worker = service_worker.replace("__CACHE_VERSION__", cache_version)
     OUTPUT.mkdir(exist_ok=True)
     (OUTPUT / "index.html").write_text(rendered, encoding="utf-8")
     (OUTPUT / "map-data.geojson.json").write_text(
         json.dumps(data, indent=2), encoding="utf-8"
     )
     shutil.copyfile(ROOT / "RULES_LA.md", OUTPUT / "RULES_LA.md")
-    (OUTPUT / "rules.html").write_text(
-        render_rules_page(rules_markdown), encoding="utf-8"
+    (OUTPUT / "rules.html").write_text(rules_page, encoding="utf-8")
+    shutil.copyfile(
+        ROOT / "scripts" / "manifest.webmanifest", OUTPUT / "manifest.webmanifest"
     )
+    (OUTPUT / "sw.js").write_text(service_worker, encoding="utf-8")
     with (OUTPUT / "station-reference.csv").open("w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["station", "lines", "division", "stop_id"])
         writer.writeheader()

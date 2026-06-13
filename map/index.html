@@ -3,13 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#172331">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Jet Lag LA">
+  <link rel="manifest" href="./manifest.webmanifest">
   <title>Jet Lag: Hide + Seek Los Angeles</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     * { box-sizing: border-box; }
     html, body { width: 100%; height: 100%; overflow: hidden; }
     body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #f4efe5; color: #1e2630; touch-action: manipulation; }
-    #map { position: fixed; inset: 0 0 0 320px; }
+    #map { position: fixed; inset: 0 0 0 320px; background: #d9e2e8; }
     aside { position: fixed; inset: 0 auto 0 0; width: 320px; padding: 22px; overflow: auto; background: #172331; color: #f8f1e4; box-shadow: 3px 0 16px #0004; z-index: 1100; }
     h1 { margin: 0 0 8px; font-size: 24px; line-height: 1.05; }
     h2 { margin: 22px 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: .12em; color: #e9b44c; }
@@ -47,7 +52,12 @@
     .rules-body .official { display: inline-block; margin: 12px 0 4px; padding: 10px 12px; border-radius: 5px; background: #1261a0; color: white; text-decoration: none; }
     .location-dot { width: 18px; height: 18px; border: 3px solid white; border-radius: 50%; background: #1677ff; box-shadow: 0 0 0 2px #1677ff55; }
     @media (max-width: 720px) {
-      #map { inset: 0; }
+      #map {
+        top: calc(-1 * env(safe-area-inset-top));
+        right: calc(-1 * env(safe-area-inset-right));
+        bottom: calc(-1 * env(safe-area-inset-bottom));
+        left: calc(-1 * env(safe-area-inset-left));
+      }
       aside {
         inset: 0;
         width: 100%;
@@ -87,6 +97,7 @@
       <button id="rulesButton" type="button">LA special rules</button>
     </div>
     <p id="locationStatus">Location is private to this device.</p>
+    <p>On iPhone, use Safari's <strong>Add to Home Screen</strong> for edge-to-edge display and offline access.</p>
     <p><a href="https://jetlag.denull.ru/en/rules/" target="_blank" rel="noopener">Official rules</a> · <a href="./rules.html" target="_blank">Full LA rules</a></p>
     <p>Click a blue station to preview its legal hiding zone. The red line is the game border.</p>
     <h2>Layers</h2>
@@ -305,6 +316,10 @@
         results.appendChild(button);
       });
     });
+
+    if ("serviceWorker" in navigator && window.isSecureContext) {
+      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
+    }
   </script>
 </body>
 </html>

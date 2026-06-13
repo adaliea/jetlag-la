@@ -15,7 +15,8 @@ zone centers. The interactive map shows the agreed game border, current rail
 lines, neighborhood divisions, and a 400 m hiding-zone preview for every
 eligible station. It also includes opt-in device location, an official-rules
 link, an in-map LA special-rules panel, and a rendered full-rules page with
-the safety exclusion list.
+the safety exclusion list. The site is installable as a Home Screen web app
+and caches the app plus previously viewed map tiles for offline use.
 
 For an offline lookup table, use
 [map/station-reference.csv](map/station-reference.csv).

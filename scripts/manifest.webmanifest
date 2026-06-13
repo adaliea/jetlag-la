@@ -1,0 +1,11 @@
+{
+  "name": "Jet Lag: Hide + Seek Los Angeles",
+  "short_name": "Jet Lag LA",
+  "description": "Interactive Los Angeles map and local rules for Jet Lag Hide + Seek.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#172331",
+  "theme_color": "#172331"
+}
