@@ -2,28 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <title>Jet Lag: Hide + Seek Los Angeles</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #f4efe5; color: #1e2630; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: #f4efe5; color: #1e2630; touch-action: manipulation; }
     #map { position: fixed; inset: 0 0 0 320px; }
-    aside { position: fixed; inset: 0 auto 0 0; width: 320px; padding: 22px; overflow: auto; background: #172331; color: #f8f1e4; box-shadow: 3px 0 16px #0004; z-index: 1000; }
+    aside { position: fixed; inset: 0 auto 0 0; width: 320px; padding: 22px; overflow: auto; background: #172331; color: #f8f1e4; box-shadow: 3px 0 16px #0004; z-index: 1100; }
     h1 { margin: 0 0 8px; font-size: 24px; line-height: 1.05; }
     h2 { margin: 22px 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: .12em; color: #e9b44c; }
     p, li { font-size: 13px; line-height: 1.45; }
     a { color: #ffd27a; }
     .stat { display: inline-block; margin: 6px 4px 0 0; padding: 6px 9px; border: 1px solid #ffffff35; border-radius: 999px; font-size: 12px; }
-    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0 6px; }
-    button, .button { padding: 9px 10px; border: 1px solid #ffffff45; border-radius: 5px; background: #ffffff12; color: white; font: inherit; text-align: center; cursor: pointer; text-decoration: none; }
+    .actions { display: grid; gap: 8px; margin: 14px 0 6px; }
+    button, .button { padding: 9px 10px; border: 1px solid #ffffff45; border-radius: 5px; background: #ffffff12; color: white; font: inherit; text-align: center; cursor: pointer; text-decoration: none; touch-action: manipulation; }
     button:hover, .button:hover { background: #ffffff20; }
     #locationStatus { min-height: 18px; margin: 5px 0 0; color: #dce8f3; font-size: 12px; }
+    .map-control { position: fixed; z-index: 1050; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: white; color: #172331; box-shadow: 0 2px 10px #0004; }
+    .map-control:hover { background: #f4efe5; }
+    .map-control svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    #locationButton { right: 14px; bottom: 28px; }
+    #menuButton { display: none; top: 14px; right: 14px; }
+    #closeMenu { display: none; position: absolute; top: 14px; right: 14px; width: 44px; height: 44px; padding: 0; font-size: 28px; line-height: 1; }
     label { display: block; margin: 8px 0; font-size: 13px; }
     input { vertical-align: middle; }
-    #search { width: 100%; padding: 9px; border: 0; border-radius: 5px; }
+    #search { width: 100%; padding: 9px; border: 0; border-radius: 5px; font-size: 16px; }
     #results button { width: 100%; padding: 7px 0; border: 0; border-bottom: 1px solid #ffffff20; background: none; color: white; text-align: left; cursor: pointer; }
-    .leaflet-popup-content strong { font-size: 14px; }
+    #stationInfo { position: fixed; left: 334px; bottom: 18px; z-index: 1050; display: none; width: min(340px, calc(100% - 410px)); padding: 14px 44px 14px 16px; border-radius: 8px; background: #172331; color: white; box-shadow: 0 2px 12px #0005; }
+    #stationInfo.visible { display: block; }
+    #stationInfo strong { display: block; margin-bottom: 3px; font-size: 15px; }
+    #stationInfo span { display: block; font-size: 12px; line-height: 1.45; }
+    #closeStationInfo { position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; padding: 0; border: 0; font-size: 23px; }
+    #mapStatus { position: fixed; z-index: 1060; left: 50%; bottom: 24px; display: none; max-width: calc(100% - 130px); padding: 9px 12px; border-radius: 6px; background: #172331; color: white; box-shadow: 0 2px 10px #0005; font-size: 13px; transform: translateX(-50%); }
+    #mapStatus.visible { display: block; }
     dialog { width: min(720px, calc(100% - 24px)); max-height: calc(100% - 24px); padding: 0; border: 0; border-radius: 8px; color: #1e2630; }
     dialog::backdrop { background: #101923bb; }
     .rules-header { position: sticky; top: 0; display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 16px 20px; background: #172331; color: white; }
@@ -34,17 +47,43 @@
     .rules-body .official { display: inline-block; margin: 12px 0 4px; padding: 10px 12px; border-radius: 5px; background: #1261a0; color: white; text-decoration: none; }
     .location-dot { width: 18px; height: 18px; border: 3px solid white; border-radius: 50%; background: #1677ff; box-shadow: 0 0 0 2px #1677ff55; }
     @media (max-width: 720px) {
-      aside { width: 100%; height: 275px; inset: 0 0 auto 0; padding: 15px 18px; }
-      #map { inset: 275px 0 0 0; }
+      #map { inset: 0; }
+      aside {
+        inset: 0;
+        width: 100%;
+        padding:
+          calc(64px + env(safe-area-inset-top))
+          calc(22px + env(safe-area-inset-right))
+          calc(28px + env(safe-area-inset-bottom))
+          calc(22px + env(safe-area-inset-left));
+        box-shadow: none;
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+      }
+      aside.open { transform: translateX(0); }
+      body.menu-open { overflow: hidden; }
+      #menuButton, #closeMenu { display: grid; place-items: center; }
+      body.menu-open #menuButton, body.menu-open #locationButton { display: none; }
+      #menuButton { top: calc(14px + env(safe-area-inset-top)); right: calc(14px + env(safe-area-inset-right)); }
+      #closeMenu { top: calc(14px + env(safe-area-inset-top)); right: calc(14px + env(safe-area-inset-right)); }
+      #locationButton { bottom: calc(24px + env(safe-area-inset-bottom)); right: calc(14px + env(safe-area-inset-right)); }
+      #stationInfo {
+        left: calc(14px + env(safe-area-inset-left));
+        bottom: calc(78px + env(safe-area-inset-bottom));
+        width: calc(100% - 28px - env(safe-area-inset-left) - env(safe-area-inset-right));
+      }
+      #mapStatus { bottom: calc(80px + env(safe-area-inset-bottom)); }
+      .leaflet-control-zoom { margin-top: calc(10px + env(safe-area-inset-top)) !important; margin-left: calc(10px + env(safe-area-inset-left)) !important; }
+      .leaflet-control-attribution { padding-right: env(safe-area-inset-right); padding-bottom: env(safe-area-inset-bottom); }
     }
   </style>
 </head>
 <body>
   <aside>
+    <button id="closeMenu" type="button" aria-label="Close menu">&times;</button>
     <h1>Hide + Seek<br>Los Angeles</h1>
     <div><span class="stat" id="count"></span><span class="stat">Small game</span><span class="stat">400 m zones</span></div>
     <div class="actions">
-      <button id="locationButton" type="button">Show my location</button>
       <button id="rulesButton" type="button">LA special rules</button>
     </div>
     <p id="locationStatus">Location is private to this device.</p>
@@ -62,6 +101,20 @@
     <p>Data updated <strong id="updated"></strong>. Check Metro alerts before playing.</p>
   </aside>
   <div id="map"></div>
+  <button id="menuButton" class="map-control" type="button" aria-label="Open menu" aria-expanded="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <button id="locationButton" class="map-control" type="button" aria-label="Go to my location" title="Go to my location">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+  </button>
+  <section id="stationInfo" aria-live="polite">
+    <button id="closeStationInfo" type="button" aria-label="Close station information">&times;</button>
+    <strong id="stationName"></strong>
+    <span id="stationLines"></span>
+    <span id="stationDivision"></span>
+    <span>Eligible 400 m zone center</span>
+  </section>
+  <div id="mapStatus" role="status" aria-live="polite"></div>
   <dialog id="rulesDialog">
     <div class="rules-header">
       <h2>LA Special Rules</h2>
@@ -133,6 +186,20 @@
     }).addTo(map);
 
     let zone;
+    const stationInfo = document.getElementById("stationInfo");
+    const selectStation = (feature, layer) => {
+      if (zone) map.removeLayer(zone);
+      zone = L.circle(layer.getLatLng(), {
+        radius: feature.properties.zone_m, color: "#d7263d", weight: 2,
+        fillColor: "#d7263d", fillOpacity: .16
+      }).addTo(map);
+      zone.bringToBack();
+      document.getElementById("stationName").textContent = feature.properties.name;
+      document.getElementById("stationLines").textContent = feature.properties.lines.join(", ") || "Metro Rail";
+      document.getElementById("stationDivision").textContent = feature.properties.division;
+      stationInfo.classList.add("visible");
+    };
+    document.getElementById("closeStationInfo").addEventListener("click", () => stationInfo.classList.remove("visible"));
     const stationLayers = [];
     const stations = L.geoJSON(data.stations, {
       pointToLayer: (f, latlng) => L.circleMarker(latlng, {
@@ -140,16 +207,7 @@
       }),
       onEachFeature: (f, layer) => {
         stationLayers.push({ feature: f, layer });
-        const linesText = f.properties.lines.join(", ") || "Metro Rail";
-        layer.bindPopup(`<strong>${f.properties.name}</strong><br>${linesText}<br>${f.properties.division}<br>Eligible 400 m zone center`);
-        layer.on("click", () => {
-          if (zone) map.removeLayer(zone);
-          zone = L.circle(layer.getLatLng(), {
-            radius: f.properties.zone_m, color: "#d7263d", weight: 2,
-            fillColor: "#d7263d", fillOpacity: .16
-          }).addTo(map);
-          zone.bringToBack();
-        });
+        layer.on("click", () => selectStation(f, layer));
       }
     }).addTo(map);
 
@@ -163,8 +221,22 @@
     bindToggle("toggleLines", lines);
     bindToggle("toggleBoundary", boundary);
 
+    const sidebar = document.querySelector("aside");
+    const menuButton = document.getElementById("menuButton");
+    const closeMenu = document.getElementById("closeMenu");
+    const setMenuOpen = open => {
+      sidebar.classList.toggle("open", open);
+      document.body.classList.toggle("menu-open", open);
+      menuButton.setAttribute("aria-expanded", String(open));
+    };
+    menuButton.addEventListener("click", () => setMenuOpen(true));
+    closeMenu.addEventListener("click", () => setMenuOpen(false));
+
     const rulesDialog = document.getElementById("rulesDialog");
-    document.getElementById("rulesButton").addEventListener("click", () => rulesDialog.showModal());
+    document.getElementById("rulesButton").addEventListener("click", () => {
+      setMenuOpen(false);
+      rulesDialog.showModal();
+    });
     document.getElementById("closeRules").addEventListener("click", () => rulesDialog.close());
     rulesDialog.addEventListener("click", event => {
       if (event.target === rulesDialog) rulesDialog.close();
@@ -172,53 +244,47 @@
 
     const locationButton = document.getElementById("locationButton");
     const locationStatus = document.getElementById("locationStatus");
-    let locationWatch;
+    const mapStatus = document.getElementById("mapStatus");
     let locationMarker;
     let accuracyCircle;
-    let firstLocation = true;
+    let statusTimer;
     const locationIcon = L.divIcon({ className: "", html: '<div class="location-dot"></div>', iconSize: [18, 18], iconAnchor: [9, 9] });
-
-    const stopLocation = () => {
-      navigator.geolocation.clearWatch(locationWatch);
-      locationWatch = undefined;
-      firstLocation = true;
-      if (locationMarker) map.removeLayer(locationMarker);
-      if (accuracyCircle) map.removeLayer(accuracyCircle);
-      locationMarker = accuracyCircle = undefined;
-      locationButton.textContent = "Show my location";
-      locationStatus.textContent = "Location is private to this device.";
+    const showMapStatus = message => {
+      clearTimeout(statusTimer);
+      mapStatus.textContent = message;
+      mapStatus.classList.add("visible");
+      statusTimer = setTimeout(() => mapStatus.classList.remove("visible"), 7000);
     };
 
     locationButton.addEventListener("click", () => {
-      if (locationWatch !== undefined) {
-        stopLocation();
+      if (!window.isSecureContext) {
+        showMapStatus("Location requires HTTPS on iPhone. Open the deployed Cloudflare URL, not a local HTTP address.");
         return;
       }
       if (!navigator.geolocation) {
-        locationStatus.textContent = "This browser does not support location.";
+        showMapStatus("This browser does not support location.");
         return;
       }
       locationStatus.textContent = "Waiting for location permission...";
-      locationWatch = navigator.geolocation.watchPosition(position => {
+      showMapStatus("Requesting your location...");
+      navigator.geolocation.getCurrentPosition(position => {
         const latlng = [position.coords.latitude, position.coords.longitude];
         if (!locationMarker) {
-          locationMarker = L.marker(latlng, { icon: locationIcon, zIndexOffset: 1000 }).addTo(map).bindPopup("Your location");
+          locationMarker = L.marker(latlng, { icon: locationIcon, zIndexOffset: 1000 }).addTo(map);
           accuracyCircle = L.circle(latlng, { radius: position.coords.accuracy, color: "#1677ff", weight: 1, fillOpacity: .08 }).addTo(map);
         } else {
           locationMarker.setLatLng(latlng);
           accuracyCircle.setLatLng(latlng).setRadius(position.coords.accuracy);
         }
-        if (firstLocation) {
-          map.setView(latlng, Math.max(map.getZoom(), 15));
-          firstLocation = false;
-        }
-        locationButton.textContent = "Stop showing location";
+        map.setView(latlng, Math.max(map.getZoom(), 15));
         locationStatus.textContent = `Location accuracy: about ${Math.round(position.coords.accuracy)} m. Not shared.`;
+        showMapStatus(`Location found, accurate to about ${Math.round(position.coords.accuracy)} m.`);
       }, error => {
-        stopLocation();
-        locationStatus.textContent = error.code === 1
+        const message = error.code === 1
           ? "Location permission was denied."
           : "Could not determine your location.";
+        locationStatus.textContent = message;
+        showMapStatus(message);
       }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
     });
 
@@ -231,7 +297,11 @@
       stationLayers.filter(x => x.feature.properties.name.toLowerCase().includes(query)).slice(0, 8).forEach(x => {
         const button = document.createElement("button");
         button.textContent = x.feature.properties.name;
-        button.onclick = () => { map.setView(x.layer.getLatLng(), 15); x.layer.fire("click"); x.layer.openPopup(); };
+        button.onclick = () => {
+          setMenuOpen(false);
+          map.setView(x.layer.getLatLng(), 15);
+          selectStation(x.feature, x.layer);
+        };
         results.appendChild(button);
       });
     });
