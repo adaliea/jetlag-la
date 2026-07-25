@@ -1,4 +1,4 @@
-const CACHE_NAME = "jetlag-la-6f4c4227681a";
+const CACHE_NAME = "jetlag-la-b545bb531374";
 const TILE_CACHE = "jetlag-la-tiles-v1";
 const MAX_TILE_ENTRIES = 500;
 const APP_SHELL = [

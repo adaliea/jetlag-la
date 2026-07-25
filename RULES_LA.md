@@ -22,6 +22,7 @@ and rules. If this document does not address a situation, use the
 | Valid hider transportation during hiding/Move | Same as seekers, but the new zone center must be an eligible blue station |
 | Divisions for prefecture/canton questions | Named neighborhood or city/CDP polygons shown on the map |
 | Required map app | **Google Maps only** |
+| Required live location app | **Find My** |
 
 Use Metro's current service information on game day. A station that is
 temporarily closed remains an eligible zone center only if the hider can
@@ -98,7 +99,10 @@ the North Hollywood branch.
 
 - Use **Google Maps only** for transit directions, walking directions,
   distances, nearby-place searches, category questions, geographic labels,
-  screenshots, and live location sharing.
+  and screenshots.
+- Use **Find My** for live location sharing. Do not use Find My, Apple Maps,
+  or another app's map labels, directions, or place data to answer game
+  questions.
 - Do not use Apple Maps, OpenStreetMap, Transit, Citymapper, Metro's trip
   planner, or another mapping app to answer questions or make game decisions.
 - The supplied interactive LA game map is the only exception. Use it to
@@ -181,8 +185,8 @@ comfortable hiding there.
 ## Pre-game checklist
 
 - Confirm the map's data date and check Metro alerts.
-- Confirm that every player has Google Maps and that Google Maps live location
-  sharing works.
+- Confirm that every player has Google Maps and that Find My location sharing
+  works.
 - Confirm every player is comfortable with all parts of the map.
 - Randomize the hiding-pair order and confirm Union Station as the first-round
   meeting point.
