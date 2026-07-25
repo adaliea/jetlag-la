@@ -83,6 +83,10 @@ the North Hollywood branch.
   station center, not the hider's exact hiding spot.
 - City/CDP polygons outside the City of Los Angeles and named LA
   neighborhoods inside it are equivalent divisions.
+- For administrative-division questions, the first administrative division is
+  California and the second administrative division is Los Angeles County.
+  For any third, fourth, or other detailed administrative-division question,
+  use the station's mapped division label as the local LA substitute.
 - If a station center lies exactly on a boundary, use the division containing
   the majority of its 400 m hiding zone. Settle this before seekers ask the
   question.

@@ -11,6 +11,7 @@ import re
 import shutil
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 
 
@@ -19,11 +20,27 @@ GTFS = ROOT / "current-gtfs-rail"
 REFERENCE = ROOT / "reference-old-la-map"
 OUTPUT = ROOT / "map"
 ZONE_KM = 0.4
+GTFS_DATE_FILES = (
+    "agency.txt",
+    "calendar.txt",
+    "calendar_dates.txt",
+    "routes.txt",
+    "shapes.txt",
+    "stops.txt",
+    "stop_times.txt",
+    "trips.txt",
+    "feed_info.txt",
+)
 
 
 def read_csv(name):
     with (GTFS / name).open(encoding="utf-8-sig", newline="") as f:
         return list(csv.DictReader(f))
+
+
+def gtfs_updated_date():
+    newest_mtime = max((GTFS / name).stat().st_mtime for name in GTFS_DATE_FILES)
+    return datetime.fromtimestamp(newest_mtime).date().isoformat()
 
 
 def point_in_polygon(point, polygon):
@@ -319,7 +336,7 @@ def build_data():
         )
 
     return {
-        "updated": "2026-06-13",
+        "updated": gtfs_updated_date(),
         "station_count": len(stations),
         "boundary": geojson_feature("Polygon", [[list(p) for p in boundary]], {}),
         "stations": {"type": "FeatureCollection", "features": stations},
@@ -352,7 +369,11 @@ def main():
     shutil.copyfile(ROOT / "scripts" / "favicon.svg", OUTPUT / "favicon.svg")
     (OUTPUT / "sw.js").write_text(service_worker, encoding="utf-8")
     with (OUTPUT / "station-reference.csv").open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["station", "lines", "division", "stop_id"])
+        writer = csv.DictWriter(
+            f,
+            fieldnames=["station", "lines", "division", "stop_id"],
+            lineterminator="\n",
+        )
         writer.writeheader()
         for feature in sorted(
             data["stations"]["features"], key=lambda x: x["properties"]["name"]
